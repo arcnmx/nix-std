@@ -1,11 +1,7 @@
-with rec {
-  function = import ./function.nix;
-  inherit (function) const flip;
-};
-
 let
   imports = {
     bool = import ./bool.nix;
+    function = import ./function.nix;
     list = import ./list.nix;
     nonempty = import ./nonempty.nix;
     num = import ./num.nix;
@@ -13,10 +9,10 @@ let
     string = import ./string.nix;
     types = import ./types.nix;
   };
+  inherit (imports.function) const;
   _null = null;
 
   /* unsafe show functions */
-  showFunction = const "<<lambda>>";
   showList = show: ls:
     let body = imports.string.intercalate ", " (imports.list.map show ls);
         tokens = [ "[" ] ++ imports.list.optional (! imports.list.empty ls) body ++ [ "]" ];
@@ -30,10 +26,11 @@ let
   showNonEmpty = show: x:
     "nonempty " + showList show (imports.nonempty.toList x);
   typeShows = imports.set.map (_: imports.nonempty.singleton) {
-    inherit (imports.types) bool float int null list path;
-    lambda = { check = builtins.isFunction; show = showFunction; };
-    set = imports.types.attrs;
+    inherit (imports.types) bool float int null list path lambda;
   } // {
+    set = imports.nonempty.make imports.types.attrs [
+      imports.types.functionSet
+    ];
     string = imports.nonempty.make imports.types.string [
       imports.types.path
     ];
@@ -233,7 +230,7 @@ rec {
     in mkType {
          name = "enum";
          description = "one of ${imports.string.concatMapSep ", " showType values}";
-         check = flip imports.list.elem values;
+         check = imports.function.flip imports.list.elem values;
        };
 
   either = a: b: mkType {
@@ -249,4 +246,30 @@ rec {
           cons = x: xs: { _0 = x; _1 = xs; };
         };
     in imports.list.foldl' either ht._0 ht._1;
+
+  function = mkType {
+    name = "function";
+    description = "function";
+    check = f: lambda.check f || functionSet.check f;
+    show = f: let
+      args = imports.function.args f;
+      showArg = k: isOptional: imports.bool.ifThenElse isOptional "${k} ? «code»" k;
+      body = imports.string.intercalate ", " (imports.set.mapToValues showArg args);
+      withArgs = "{ " + body + " }: «code»";
+    in imports.bool.ifThenElse (args == { }) "«lambda»" withArgs;
+  };
+
+  lambda = mkType {
+    name = "lambda";
+    description = "lambda function";
+    check = builtins.isFunction;
+    inherit (function) show;
+  };
+
+  functionSet = mkType {
+    name = "function ${attrs.name}";
+    description = "callable ${attrs.description} function";
+    check = f: f ? __functor;
+    inherit (function) show;
+  };
 }
