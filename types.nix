@@ -132,6 +132,12 @@ rec {
     check = builtins.isString;
   };
 
+  stringlike = mkType {
+    name = "stringlike";
+    description = "stringlike";
+    check = imports.string.canConvert;
+  };
+
   stringMatching = pattern: mkType {
     name = "stringMatching ${imports.string.escapeNixString pattern}";
     description = "string matching the pattern ${pattern}";
@@ -152,9 +158,18 @@ rec {
 
   path = mkType {
     name = "path";
-    description = "a path";
-    check = x: builtins.isString x && builtins.substring 0 1 (builtins.toString x) == "/";
+    description = "path";
+    check = builtins.isPath;
+    show = toString;
   };
+
+  pathlike =
+    let check = x: imports.string.substring 0 1 (toString x) == "/";
+    in addCheck stringlike check // {
+      name = "pathlike";
+      description = "a pathlike string";
+      show = toString;
+    };
 
   listOf = type: mkType {
     name = "[${type.name}]";

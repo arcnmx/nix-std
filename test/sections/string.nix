@@ -189,4 +189,34 @@ section "std.string" {
     (assertEqual (string.justifyCenter 2 "x" "foo") "foo")
     (assertEqual (string.justifyCenter 8 "xyz" "foo") "xyfooxyz")
   ];
+
+  convert = string.unlines [
+    (assertEqual (optional.just "foo") (string.convert "foo"))
+    (assertEqual (optional.just "foo") (string.convert { __toString = _: "foo"; }))
+    (assertEqual (optional.just "/foo") (string.convert { outPath = "/foo"; }))
+    (assertEqual optional.nothing (string.convert { }))
+    (assertEqual (optional.just (toString ./default.nix)) (string.convert ./default.nix))
+    (assertEqual (optional.just "") (string.convert null))
+    (assertEqual (optional.just "1") (string.convert 1))
+    (assertEqual (optional.just (toString 1.0)) (string.convert 1.0))
+    (assertEqual (optional.just "1") (string.convert true))
+    (assertEqual (optional.just "") (string.convert false))
+    (assertEqual (optional.just "") (string.convert [ ]))
+    (assertEqual (optional.just "foo") (string.convert [ "foo" ]))
+    (assertEqual (optional.just "foo 1 ") (string.convert [ "foo" 1 null ]))
+    (assertEqual optional.nothing (string.convert ({ a }: a)))
+  ];
+  coerce = string.unlines [
+    (assertEqual (optional.just "foo") (string.coerce "foo"))
+    (assertEqual (optional.just "foo") (string.coerce { __toString = _: "foo"; }))
+    (assertEqual (optional.just "/foo") (string.coerce { outPath = "/foo"; }))
+    (assertEqual optional.nothing (string.coerce { }))
+    (assertEqual true (optional.isJust (string.coerce ./default.nix)))
+    (assertEqual optional.nothing (string.coerce null))
+    (assertEqual optional.nothing (string.coerce 1))
+    (assertEqual optional.nothing (string.coerce 1.0))
+    (assertEqual optional.nothing (string.coerce true))
+    (assertEqual optional.nothing (string.coerce [ "foo" ]))
+    (assertEqual optional.nothing (string.coerce ({ a }: a)))
+  ];
 }

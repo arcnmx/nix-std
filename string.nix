@@ -1,7 +1,8 @@
 with rec {
   function = import ./function.nix;
-  inherit (function) flip;
+  inherit (function) const flip;
 
+  bool = import ./bool.nix;
   list = import ./list.nix;
   regex = import ./regex.nix;
   num = import ./num.nix;
@@ -760,4 +761,60 @@ rec {
     in if fillLen > 0
       then justifyRight (strLen + leftLen + rightLen) fill (justifyLeft (strLen + leftLen) fill str)
       else throw "std.string.justifyCenter: empty padding string";
+
+  /* convert :: a -> optional string
+
+     Converts a value to a string following the same rules as `builtins.toString`,
+     returning `optional.nothing` if the value cannot be converted.
+  */
+  convert = x: bool.toOptional (canConvert x) (unsafeConvert x);
+
+  /* @partial
+     unsafeConvert :: a -> string
+  */
+  unsafeConvert = toString;
+
+  /* canConvert :: a -> bool
+
+     Whether a value can be converted to a string.
+  */
+  canConvert = let
+    typecheck = {
+      path = const true;
+      string = const true;
+      null = const true;
+      int = const true;
+      float = const true;
+      bool = const true;
+      list = list.all canConvert;
+      set = canCoerce;
+    };
+  in x: typecheck.${builtins.typeOf x} or (const false) x;
+
+  /* coerce :: a -> optional string
+
+     Coerces a value to a string, or returns `optional.nothing`
+     if the value cannot be converted.
+  */
+  coerce = x: bool.toOptional (canCoerce x) (unsafeCoerce x);
+
+  /* @partial
+     unsafeCoerce :: a -> string
+  */
+  unsafeCoerce = builtins.substring 0 (-1);
+
+  /* canCoerce :: a -> bool
+     canCoerce :: path | string -> true
+
+     Whether a value can be coerced or "${interpolated}" into a string.
+     Besides strings and paths, only sets with either
+     `outPath` or `__toString` keys can be used.
+  */
+  canCoerce = let
+    typecheck = {
+      path = const true;
+      string = const true;
+      set = x: x ? outPath || x ? __toString;
+    };
+  in x: typecheck.${builtins.typeOf x} or (const false) x;
 }
