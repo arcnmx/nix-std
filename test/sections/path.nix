@@ -18,4 +18,21 @@ in section "std.path" {
     (assertEqual true (types.pathlike.check (toString ./path.nix)))
     (assertEqual false (types.pathlike.check "a/b/c"))
   ];
+
+  baseName = string.unlines [
+    (assertEqual "path.nix" (path.baseName ./path.nix))
+    (assertEqual "path.nix" (path.baseName (toString ./path.nix)))
+    (assertEqual "-test" (string.substring 32 (-1) (path.baseName testDrv)))
+  ];
+
+  dirName = string.unlines [
+    (assertEqual ./. (path.parent ./path.nix))
+    (assertEqual (toString ./.) (path.dirName (toString ./path.nix)))
+    (assertEqual (toString builtins.storeDir) (path.dirName testDrv))
+  ];
+
+  fromString = string.unlines [
+    (assertEqual (optional.just /a/b/c) (path.fromString "/a/b/c"))
+    (assertEqual optional.nothing (path.fromString "a/b/c"))
+  ];
 }
