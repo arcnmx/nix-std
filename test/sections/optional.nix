@@ -4,6 +4,22 @@ with std;
 with (import ./../framework.nix);
 
 section "std.optional" {
+  check = string.unlines [
+    (assertEqual true (types.optional.check optional.nothing))
+    (assertEqual true (types.optional.check (optional.just "foo")))
+    (assertEqual false (types.optional.check (optional.nothing // { foo = "bar"; })))
+    (assertEqual false (types.optional.check (optional.just "foo" // { foo = "bar"; })))
+    (assertEqual true ((types.optionalOf types.string).check optional.nothing))
+    (assertEqual true ((types.optionalOf types.string).check (optional.just "foo")))
+    (assertEqual false ((types.optionalOf types.int).check (optional.just "foo")))
+  ];
+
+  show = string.unlines [
+    (assertEqual "nothing" (types.optional.show optional.nothing))
+    (assertEqual "just 0" (types.optional.show (optional.just 0)))
+    (assertEqual "nothing" ((types.optionalOf types.int).show optional.nothing))
+    (assertEqual "just 1" ((types.optionalOf types.int).show (optional.just 1)))
+  ];
   laws = string.unlines [
     (functor optional.functor {
       typeName = "optional";

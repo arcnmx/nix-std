@@ -5,6 +5,7 @@ let
     list = import ./list.nix;
     nonempty = import ./nonempty.nix;
     num = import ./num.nix;
+    optional = import ./optional.nix;
     set = import ./set.nix;
     string = import ./string.nix;
     types = import ./types.nix;
@@ -25,6 +26,10 @@ let
     in imports.string.intercalate " " ([ "{" ] ++ body ++ [ "}" ]);
   showNonEmpty = show: x:
     "nonempty " + showList show (imports.nonempty.toList x);
+  showOptional = show: imports.function.flip imports.optional.match {
+    just = x: "just ${show x}";
+    nothing = "nothing";
+  };
 
   addCheck = type: check: type // {
     check = x: type.check x && check x;
@@ -214,6 +219,30 @@ rec {
     name = "${base.name} ${type.name}";
     description = "${base.description} of ${type.description}s";
     show = showNonEmpty type.show;
+  };
+
+  optional = mkType {
+    name = "optional";
+    description = "optional";
+    check = let
+      tagcheck = {
+        just = [ "_tag" "value" ];
+        nothing = [ "_tag" ];
+      };
+    in x: x ? _tag && imports.set.keys x == tagcheck.${x._tag} or null;
+    show = showOptional show;
+  };
+
+  optionalOf = type: let
+    check = imports.function.flip imports.optional.match {
+      just = type.check;
+      nothing = true;
+    };
+    base = addCheck optional check;
+  in base // {
+    name = "${base.name} ${type.name}";
+    description = "${base.description} of ${type.description}s";
+    show = showOptional type.show;
   };
 
   null = mkType {
