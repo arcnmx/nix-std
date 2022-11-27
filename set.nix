@@ -2,6 +2,7 @@ with rec {
   function = import ./function.nix;
   inherit (function) id flip compose;
   list = import ./list.nix;
+  nix = import ./nix.nix;
 };
 
 rec {
@@ -103,7 +104,7 @@ rec {
 
   /* fromList :: [(key, value)] -> set
   */
-  fromList = xs: builtins.listToAttrs (list.map ({ _0, _1 }: { name = _0; value = _1; }) xs);
+  fromList = xs: builtins.listToAttrs (list.map nix.tupleToPair xs);
 
   /* gen :: [key] -> (key -> value) -> set
   */

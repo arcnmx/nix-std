@@ -6,6 +6,7 @@
   list = import ./list.nix;
   nonempty = import ./nonempty.nix;
   num = import ./num.nix;
+  nix = import ./nix.nix;
   optional = import ./optional.nix;
   path = import ./path.nix;
   regex = import ./regex.nix;
