@@ -10,7 +10,7 @@ in section "std.nix" {
     (assertEqual optional.nothing (nix.try (throw "foo")))
     (assertEqual (optional.just "foo") (nix.try "foo"))
   ];
-  storeText = assertEqual true (optional.isJust (path.fromString stored));
+  storeText = assertEqual true (drv.isPath stored);
   getContext = string.unlines [
     (assertEqual {} (nix.getContext ""))
     (assertEqual true (nix.getContext stored != { }))

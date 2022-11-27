@@ -1,6 +1,7 @@
 {
   bool = import ./bool.nix;
   bits = import ./bits.nix;
+  drv = import ./drv.nix;
   fixpoints = import ./fixpoints.nix;
   fs = import ./fs.nix;
   list = import ./list.nix;
