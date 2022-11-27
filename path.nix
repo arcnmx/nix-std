@@ -1,6 +1,7 @@
 with rec {
   string = import ./string.nix;
   bool = import ./bool.nix;
+  optional = import ./optional.nix;
   types = import ./types.nix;
 };
 
@@ -66,4 +67,10 @@ rec {
      /a/b/c
   */
   unsafeFromString = s: /. + builtins.unsafeDiscardStringContext (toString s);
+
+  /* from :: string | path -> optional path
+  */
+  from = p:
+    if types.path.check p then optional.just p
+    else fromString p;
 }
